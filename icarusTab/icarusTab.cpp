@@ -36,12 +36,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "icarusTab.h"
-
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN 1
+#endif
 #include <wx/wx.h>
+#include <WinSock2.h>
+#include <ws2tcpip.h>
 #include <GUI/Viewer.h>
 #include <GUI/GUI.h>
 #include <iostream>
+#include <sys/types.h>
+
+#include "icarusTab.h"
+
+/*******************************
+* Temp
+*******************************/
+//#include "socket.h"
+//#include <fstream>
+//#include <process.h>
+/*******************************
+* Temp
+*******************************/
+
 
 #include <collision/CollisionSkeleton.h>
 #include <dynamics/SkeletonDynamics.h>
@@ -55,6 +72,10 @@
 #include "Controller.h"
 
 using namespace std;
+
+HANDLE hThread;
+unsigned threadID;
+bool threadStop;
 
 // Define IDs for buttons
 enum DynamicSimulationTabEvents {
@@ -118,6 +139,7 @@ icarusTab::icarusTab(wxWindow *parent, const wxWindowID id, const wxPoint& pos, 
   mPredefGoalConf << -0.69115, 0.121475, 0.284977, -1.02486, 0.0, 0.0;
   mStartConf = mPredefStartConf;
   mGoalConf = mPredefGoalConf;
+  
 }
 
 
@@ -141,11 +163,34 @@ void icarusTab::GRIPEventSceneLoaded() {
   }
 }
 
+/// Before each simulation step we set the torques the controller applies to the joints
+void icarusTab::GRIPEventSimulationStart() {
+	std::cout << "Start Server" << endl;
+	icarusTab::startServer();
+}
+
+/// Before each simulation step we set the torques the controller applies to the joints
+void icarusTab::GRIPEventSimulationStop() {
+	std::cout << "Stop Server" << endl;
+	icarusTab::stopServer();
+}
 
 /// Before each simulation step we set the torques the controller applies to the joints
 void icarusTab::GRIPEventSimulationBeforeTimestep() {
-  Eigen::VectorXd torques = mController->getTorques(mRobot->getPose(), mRobot->getPoseVelocity(), mWorld->getTime());
-  mRobot->setInternalForces(torques);
+	//icarusTab::receiveData();
+	/*
+	u_long count;
+	try {
+		if (ioctlsocket(clientConnection->getSocket(), FIONREAD, &count) == 0) {
+			cout << "connected" << endl;
+		}
+	}
+	catch (...) {
+		cerr << "error" << endl;
+	}
+	*/
+	Eigen::VectorXd torques = mController->getTorques(mRobot->getPose(), mRobot->getPoseVelocity(), mWorld->getTime());
+	mRobot->setInternalForces(torques);
 }
 
 
@@ -276,6 +321,198 @@ void icarusTab::onButtonPlan(wxCommandEvent & _evt) {
   // Reactivate collision of feet with floor
   //mWorld->getCollisionHandle()->getCollisionChecker()->activatePair(mRobot->getNode("Body_LAR"), ground->getNode(1));
   //mWorld->getCollisionHandle()->getCollisionChecker()->activatePair(mRobot->getNode("Body_RAR"), ground->getNode(1));
+}
+
+// Serialize a Eigen::VectorXd
+std::string icarusTab::serializeVectorXd(const Eigen::VectorXd &vectorXd)
+{
+	//std::string output;
+	int size = vectorXd.size();
+	std::stringstream output;
+	output << "a:" << size;
+	if (size > 0) {
+		output << ":{";
+	}
+	for (int i = 0; i < size; i++) {
+		output << "i:" << i << ";" << "d:" << vectorXd.array()[i] << ";";
+	}
+	if (size > 0) {
+		output << "}";
+	}
+	return output.str();
+}
+
+// Run when the server accept a connection
+unsigned __stdcall Connection(void* arg) {
+	icarusTab* icarusTabObj = (icarusTab*)arg;
+	// Create socket
+	SocketInterface::SocketServer server(SERVER_PORT, 1, SocketInterface::NonBlockingSocket);
+	
+	 while (!threadStop) {
+		// Wait for the client
+		std::cout << "Waiting on port " << SERVER_PORT << endl;
+		int connectionResult = WSAEWOULDBLOCK;
+		SocketInterface::Socket* clientConnection;
+		while(connectionResult==WSAEWOULDBLOCK && !threadStop)
+		{
+			//std::cout<<"Waiting for incoming connections...\r\n";
+			clientConnection = server.Accept();
+			connectionResult=WSAGetLastError();
+		}
+		while (!threadStop) {
+			std::string inputTemp = clientConnection->ReceiveLine();
+			std::string inputData = inputTemp.substr(0, inputTemp.size()-1);
+			//cout << inputData.length() << " | " << inputData << endl;
+			int nError=WSAGetLastError();
+			//cout << nError << endl;
+			// Wait for receive data
+			if (nError==WSAEWOULDBLOCK) {
+				//cout << "WSAEWOULDBLOCK" << endl;
+			}
+			// winsock error
+			//else if (nError!=WSAEWOULDBLOCK && nError!=0 && inputData.empty() && nError!=6) {
+			else if (nError!=WSAEWOULDBLOCK && nError!=0 && inputData.empty()) {
+				//cout<<"Winsock error code: "<<nError<<"\r\n";
+				cout<<"Server disconnected!\r\n";
+				// Close our socket entirely
+				clientConnection->Close();
+
+				break;
+			}
+			// Information OK
+			else {
+				if (inputData == "close()") {
+					cout << "closing" << endl;
+					break;
+				}
+				/*
+				std::string outputData;
+				outputData = icarusTabObj->serializeVectorXd(mWorld->getState().transpose());
+				clientConnection->SendLine(outputData);
+				*/
+				else if (inputData == "update()") {
+					cout << "Showing start conf for right arm: " << icarusTabObj->mStartConf.transpose() << endl;
+					icarusTabObj->mRobot->setConfig(icarusTabObj->mArmDofs, icarusTabObj->mStartConf);
+					clientConnection->SendLine("update");
+				}
+				else if (inputData == "getObjects()") {
+					std::stringstream outputData;
+						
+					// getYellowCube
+					dynamics::SkeletonDynamics* yellowCube = mWorld->getSkeleton("yellowCube");
+					
+					if(yellowCube) {
+						Eigen::VectorXd pose, dimension;
+						pose = yellowCube->getPose();
+						dimension = yellowCube->getNode(0)->getShape()->getDim();
+					
+						outputData << "(block yellowCube xpos " << pose.x() << " ypos " << pose.y() << " zpos " << pose.z();
+						outputData << " roll " << pose[3] << " pitch " << pose[4] << " yaw " << pose[5];
+						outputData << " width " << dimension.x() << " height " << dimension.y() << " length  " << dimension.z() << " shade " << pose[5] << ")";
+						cout << "sending yellowCube" << endl;
+					}
+				
+					// getOrangeCube()
+					dynamics::SkeletonDynamics* orangeCube = mWorld->getSkeleton("orangeCube");
+					
+					if (orangeCube) {
+						Eigen::VectorXd pose, dimension;
+						pose = orangeCube->getPose();
+						dimension = orangeCube->getNode(0)->getShape()->getDim();
+						
+						outputData << "(block orangeCube xpos " << pose.x() << " ypos " << pose.y() << " zpos " << pose.z();
+						outputData << " roll " << pose[3] << " pitch " << pose[4] << " yaw " << pose[5];
+						outputData << " width " << dimension.x() << " height " << dimension.y() << " length  " << dimension.z() << " shade " << 0 << ")";
+						cout << "sending OrangeCube" << endl;
+					}
+
+					// getGlassDiningTable2()
+					dynamics::SkeletonDynamics* diningTable = mWorld->getSkeleton("glassDiningTable2");
+					
+					if (diningTable) {
+						Eigen::VectorXd pose, dimension;
+						pose = diningTable->getPose();
+						dimension = diningTable->getNode(0)->getShape()->getDim();
+						
+						outputData << "(block glassDiningTable2 xpos " << pose.x() << " ypos " << pose.y() << " zpos " << pose.z();
+						outputData << " roll " << pose[3] << " pitch " << pose[4] << " yaw " << pose[5] << ")";;
+						cout << "sending glassDiningTable2" << endl;
+					}
+				
+					// getGolemHubo()
+					dynamics::SkeletonDynamics* golemHubo = mWorld->getSkeleton("GolemHubo");
+					
+					if (golemHubo) {
+						Eigen::VectorXd pose, dimension;
+						pose = golemHubo->getPose();
+						dimension = golemHubo->getNode(0)->getShape()->getDim();
+						
+						outputData << "(block GolemHubo xpos " << pose.x() << " ypos " << pose.y() << " zpos " << pose.z();
+						outputData << " roll " << pose[3] << " pitch " << pose[4] << " yaw " << pose[5] << ")";;
+						cout << "sending GolemHubo" << endl;
+					}
+
+					clientConnection->SendLine( outputData.str() );
+				}
+				else if (inputData == "wait()") {
+					cout << "Waiting" << endl;
+					clientConnection->SendLine("wait");
+				}
+				else if (!inputData.empty()) {
+					cout << "Unknow command" << endl;
+					clientConnection->SendLine("Unknow command");
+				}
+			}
+		}
+		if (clientConnection) {
+			clientConnection->Close();
+		}
+	}
+	server.Close();
+	return 0;
+}
+
+// Start the server
+void icarusTab::startServer() {
+	try {
+		// Signal to continue the thread.
+		threadStop = false;
+		hThread = (HANDLE)_beginthreadex(0, 0, Connection, this, 0, &threadID);
+	}
+	catch (char *s) {
+		cerr << s << endl;
+	} 
+	catch (std::string s) {
+		cerr << s << endl;
+	}
+	catch (std::exception& e) {
+		cerr << "Standard exception: " << e.what() << endl;
+	}
+	catch (...) {
+		cerr << "unhandled exception\n";
+	}
+}
+
+// Stop the server
+void icarusTab::stopServer() {
+	try {
+		// Signal to stop the thread.
+		threadStop = true;
+		// Destroy the thread object.
+		CloseHandle( hThread );
+	}
+	catch (char *s) {
+		cerr << s << endl;
+	} 
+	catch (std::string s) {
+		cerr << s << endl;
+	}
+	catch (std::exception& e) {
+		cerr << "Standard exception: " << e.what() << endl;
+	}
+	catch (...) {
+		cerr << "unhandled exception\n";
+	}
 }
 
 // Local Variables:

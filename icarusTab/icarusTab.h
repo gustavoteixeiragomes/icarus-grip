@@ -36,14 +36,26 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __SAMPLE_PLANNING_TAB__
-#define __SAMPLE_PLANNING_TAB__
+#ifndef __ICARUS_TAB__
+#define __ICARUS_TAB__
 
 #include <vector>
 #include <Tabs/GRIPTab.h>
+#include <Tabs/GRIPThread.h>
+#include <fstream>
+
+/*******************************
+* Temp
+*******************************/
+#include "socket.h"
+#include <process.h>
+/*******************************
+* Temp
+*******************************/
 
 namespace planning { class Controller; }
 namespace dynamics { class SkeletonDynamics; }
+namespace socketInterface { class Socket; class SocketClient; class SocketServer; class SocketSelect; }
 
 class icarusTab : public GRIPTab
 {
@@ -52,6 +64,8 @@ public:
   icarusTab(wxWindow * parent, wxWindowID id = -1, const wxPoint & pos = wxDefaultPosition, const wxSize & size = wxDefaultSize, long style = wxTAB_TRAVERSAL);
   virtual ~icarusTab() {};
 
+  virtual void GRIPEventSimulationStart();
+  virtual void GRIPEventSimulationStop();
   virtual void GRIPEventSimulationBeforeTimestep();
   virtual void GRIPEventSceneLoaded();
 
@@ -72,6 +86,10 @@ public:
   Eigen::VectorXd mGoalConf;
   Eigen::VectorXd mPredefStartConf;
   Eigen::VectorXd mPredefGoalConf;
+
+  std::string icarusTab::serializeVectorXd(const Eigen::VectorXd &vectorXd);
+  void icarusTab::startServer();
+  void icarusTab::stopServer();
 
   DECLARE_DYNAMIC_CLASS(icarusTab)
   DECLARE_EVENT_TABLE()
