@@ -4,7 +4,12 @@
   <include filename="glassDiningTable2.urdf" model_name="glassDiningTable2"/>
   <include filename="orangeCubeObject_small.urdf" model_name="orangeCube"/>
   <include filename="yellowCubeObject_small.urdf" model_name="yellowCube"/>
-  <!-- <include filename="cyanCubeObject_small.urdf" model_name="cyanCube"/> -->
+  <include filename="cyanCubeObject_small.urdf" model_name="cyanCube"/>
+  <include filename="redCubeObject_small.urdf" model_name="redCube"/>
+  <!-- 
+  <include filename="blueCubeObject.urdf" model_name="blueCube"/>
+  <include filename="greenCubeObject.urdf" model_name="greenCube"/>
+  -->
   <entity model="huboplus" name="GolemHubo">
     <origin xyz="0 0 0.988" rpy="0 0 0"/>
   </entity>
@@ -14,15 +19,29 @@
   </entity>
 
   <entity model="orangeCube" name="orangeCube">
-    <origin xyz="0.53 -0.30 0.83" rpy="0.0 0.0 0.0"/>
+    <origin xyz="0.30 -0.30 0.83" rpy="0.0 0.0 0.0"/>
   </entity>
 
   <entity model="yellowCube" name="yellowCube">
-    <origin xyz="0.53 -0.30 0.935" rpy="0.0 0.0 0.0"/>
+    <origin xyz="0.30 -0.30 0.935" rpy="0.0 0.0 0.0"/>
   </entity>
 
-<!--  <entity model="cyanCube" name="cyanCube">
-    <origin xyz="0.40 -0.13 1.04" rpy="0.0 0.0 0.0"/>
-  </entity> -->
+  <entity model="cyanCube" name="cyanCube">
+    <origin xyz="0.30 -0.15 0.835" rpy="0.0 0.0 0.0"/>
+  </entity>
 
+  <entity model="redCube" name="redCube">
+    <origin xyz="0.30 -0.15 0.935" rpy="0.0 0.0 0.0"/>
+  </entity>
+
+  <!-- Not small objects
+  <entity model="blueCube" name="blueCube">
+    <origin xyz="0.73 -0.30 0.935" rpy="0.0 0.0 0.0"/>
+  </entity>
+
+  <entity model="greenCube" name="greenCube">
+    <origin xyz="0.93 -0.30 0.935" rpy="0.0 0.0 0.0"/>
+  </entity>
+  -->
+  
 </world>
