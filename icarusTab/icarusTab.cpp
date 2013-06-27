@@ -79,11 +79,7 @@ bool threadStop;
 
 // Define IDs for buttons
 enum DynamicSimulationTabEvents {
-  id_button_SetStart = 8345,
-  id_button_SetGoal,
-  id_button_SetPredefStart,
-  id_button_SetPredefGoal,
-  id_button_RelocateObjects,
+  id_button_RestartObjects,
   id_button_ShowStart,
   id_button_ShowGoal,
   id_button_Plan
@@ -91,11 +87,7 @@ enum DynamicSimulationTabEvents {
 
 // Handler for events
 BEGIN_EVENT_TABLE(icarusTab, wxPanel)
-EVT_COMMAND (id_button_SetStart, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonSetStart)
-EVT_COMMAND (id_button_SetGoal, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonSetGoal)
-EVT_COMMAND (id_button_SetPredefStart, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonSetPredefStart)
-EVT_COMMAND (id_button_SetPredefGoal, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonSetPredefGoal)
-EVT_COMMAND (id_button_RelocateObjects, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonRelocateObjects)
+EVT_COMMAND (id_button_RestartObjects, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonRestartObjects)
 EVT_COMMAND (id_button_ShowStart, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonShowStart)
 EVT_COMMAND (id_button_ShowGoal, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonShowGoal)
 EVT_COMMAND (id_button_Plan, wxEVT_COMMAND_BUTTON_CLICKED, icarusTab::onButtonPlan)
@@ -117,11 +109,7 @@ icarusTab::icarusTab(wxWindow *parent, const wxWindowID id, const wxPoint& pos, 
   wxStaticBoxSizer* ss2BoxS = new wxStaticBoxSizer(ss2Box, wxVERTICAL);
   wxStaticBoxSizer* ss3BoxS = new wxStaticBoxSizer(ss3Box, wxVERTICAL);
 
-  ss1BoxS->Add(new wxButton(this, id_button_SetStart, wxT("Set Start Conf")), 0, wxALL, 1); 
-  ss1BoxS->Add(new wxButton(this, id_button_SetGoal, wxT("Set Goal Conf")), 0, wxALL, 1); 
-  ss1BoxS->Add(new wxButton(this, id_button_SetPredefStart, wxT("Set Predef Start")), 0, wxALL, 1); 
-  ss1BoxS->Add(new wxButton(this, id_button_SetPredefGoal, wxT("Set Predef Goal")), 0, wxALL, 1); 
-  ss1BoxS->Add(new wxButton(this, id_button_RelocateObjects, wxT("Relocate objects")), 0, wxALL, 1);
+  ss1BoxS->Add(new wxButton(this, id_button_RestartObjects, wxT("Restart objects")), 0, wxALL, 1);
   ss2BoxS->Add(new wxButton(this, id_button_ShowStart, wxT("Show Start")), 0, wxALL, 1); 
   ss2BoxS->Add(new wxButton(this, id_button_ShowGoal, wxT("Show Goal")), 0, wxALL, 1); 
   ss3BoxS->Add(new wxButton(this, id_button_Plan, wxT("Do Planning")), 0, wxALL, 1); 
@@ -163,13 +151,13 @@ void icarusTab::GRIPEventSceneLoaded() {
   }
 }
 
-/// Before each simulation step we set the torques the controller applies to the joints
+/// Start the server on the simulation start
 void icarusTab::GRIPEventSimulationStart() {
 	std::cout << "Start Server" << endl;
 	icarusTab::startServer();
 }
 
-/// Before each simulation step we set the torques the controller applies to the joints
+/// Stop the server on the simulation stop
 void icarusTab::GRIPEventSimulationStop() {
 	std::cout << "Stop Server" << endl;
 	icarusTab::stopServer();
@@ -177,67 +165,20 @@ void icarusTab::GRIPEventSimulationStop() {
 
 /// Before each simulation step we set the torques the controller applies to the joints
 void icarusTab::GRIPEventSimulationBeforeTimestep() {
-	//icarusTab::receiveData();
-	/*
-	u_long count;
-	try {
-		if (ioctlsocket(clientConnection->getSocket(), FIONREAD, &count) == 0) {
-			cout << "connected" << endl;
-		}
-	}
-	catch (...) {
-		cerr << "error" << endl;
-	}
-	*/
 	Eigen::VectorXd torques = mController->getTorques(mRobot->getPose(), mRobot->getPoseVelocity(), mWorld->getTime());
 	mRobot->setInternalForces(torques);
 }
 
-
-/// Set start configuration to the configuration the arm is currently in
-void icarusTab::onButtonSetStart(wxCommandEvent & _evt) {
-  if(!mWorld || mWorld->getNumSkeletons() < 1) {
-    cout << "No world loaded or world does not contain a robot." << endl;
-    return;
-  }
-
-  mStartConf = mRobot->getConfig(mArmDofs);
-  cout << "Start Configuration: " << mStartConf.transpose() << endl;
-}
-
-
-/// Set goal configuration to the configuration the arm is currently in
-void icarusTab::onButtonSetGoal(wxCommandEvent & _evt) {
-  if(!mWorld || mWorld->getNumSkeletons() < 1) {
-    cout << "No world loaded or world does not contain a robot." << endl;
-    return;
-  }
-
-  mGoalConf = mRobot->getConfig(mArmDofs);
-  cout << "Goal Configuration: " << mGoalConf.transpose() << endl;
-}
-
-
-/// Reset start configuration to the predefined one
-void icarusTab::onButtonSetPredefStart(wxCommandEvent & _evt) {
-  mStartConf = mPredefStartConf;
-}
-
-
-/// Reset goal configuration to the predefined one
-void icarusTab::onButtonSetPredefGoal(wxCommandEvent & _evt) {
-  mGoalConf = mPredefGoalConf;
-}
-
-
-/// Move objects to obstruct the direct path between the predefined start and goal configurations
-void icarusTab::onButtonRelocateObjects(wxCommandEvent & _evt) {
+/// Move the cube to the initial position
+void icarusTab::onButtonRestartObjects(wxCommandEvent & _evt) {
 
   dynamics::SkeletonDynamics* orangeCube = mWorld->getSkeleton("orangeCube");
   dynamics::SkeletonDynamics* yellowCube = mWorld->getSkeleton("yellowCube");
+  dynamics::SkeletonDynamics* cyanCube = mWorld->getSkeleton("cyanCube");
+  dynamics::SkeletonDynamics* redCube = mWorld->getSkeleton("redCube");
   
-  if(!orangeCube || !yellowCube) {
-    cout << "Did not find orange or yellow object. Exiting and no moving anything" << endl;
+  if(!orangeCube || !yellowCube || !cyanCube || !redCube) {
+    cout << "Did not find orange or yellow or cyan or red object. Exiting and no moving anything" << endl;
     return;
   }
   
@@ -246,6 +187,10 @@ void icarusTab::onButtonRelocateObjects(wxCommandEvent & _evt) {
   orangeCube->setPose(pose);
   pose << 0.30, -0.30, 0.935, 0.0, 0.0, 0.0;
   yellowCube->setPose(pose);
+  pose << 0.30, -0.15, 0.83, 0.0, 0.0, 0.0;
+  cyanCube->setPose(pose);
+  pose << 0.30, -0.15, 0.935, 0.0, 0.0, 0.0;
+  redCube->setPose(pose);
 
   viewer->DrawGLScene();
 }
@@ -322,6 +267,16 @@ void icarusTab::onButtonPlan(wxCommandEvent & _evt) {
   //mWorld->getCollisionHandle()->getCollisionChecker()->activatePair(mRobot->getNode("Body_LAR"), ground->getNode(1));
   //mWorld->getCollisionHandle()->getCollisionChecker()->activatePair(mRobot->getNode("Body_RAR"), ground->getNode(1));
 }
+
+/*=====================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+=======================================================================================================================
+=====================================================================================================================*/
+
+//***************************** Move to external class
 
 // Serialize a Eigen::VectorXd
 std::string icarusTab::serializeVectorXd(const Eigen::VectorXd &vectorXd)

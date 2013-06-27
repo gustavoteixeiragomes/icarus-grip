@@ -69,11 +69,7 @@ public:
   virtual void GRIPEventSimulationBeforeTimestep();
   virtual void GRIPEventSceneLoaded();
 
-  void onButtonSetStart(wxCommandEvent & _evt);
-  void onButtonSetGoal(wxCommandEvent & _evt);
-  void onButtonSetPredefStart(wxCommandEvent & _evt);
-  void onButtonSetPredefGoal(wxCommandEvent & _evt);
-  void onButtonRelocateObjects(wxCommandEvent & _evt);
+  void onButtonRestartObjects(wxCommandEvent & _evt);
   void onButtonShowStart(wxCommandEvent & _evt);
   void onButtonShowGoal(wxCommandEvent & _evt);
   void onButtonPlan(wxCommandEvent & _evt);
