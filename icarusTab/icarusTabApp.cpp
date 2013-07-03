@@ -9,12 +9,14 @@
 
 #include "GRIPApp.h"
 #include "icarusTab.h"
+#include "serverTab.h"
 
 extern wxNotebook* tabView;
 
 class icarusTabApp : public GRIPApp {
 	virtual void AddTabs() {
 		tabView->AddPage(new icarusTab(tabView), wxT("ICARUS Tab"));
+		tabView->AddPage(new serverTab(tabView), wxT("Server Tab"));
 	}
 };
 

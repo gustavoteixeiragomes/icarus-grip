@@ -36,61 +36,50 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ICARUS_TAB__
-#define __ICARUS_TAB__
+#ifndef __SERVER_TAB__
+#define __SERVER_TAB__
 
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN 1
 #endif
 
-#include <vector>
-#include <Tabs/GRIPTab.h>
-#include <fstream>
-
 #include <GUI/Viewer.h>
 #include <GUI/GUI.h>
 
-#include <collision/CollisionSkeleton.h>
-#include <dynamics/SkeletonDynamics.h>
-#include <dynamics/ContactDynamics.h>
-#include <kinematics/ShapeBox.h>
-#include <kinematics/Dof.h>
-#include <kinematics/Joint.h>
-#include <planning/PathPlanner.h>
-#include <planning/PathShortener.h>
-#include <planning/PathFollowingTrajectory.h>
+#include "BoostServer.h"
 
-#include "Controller.h"
+#include <vector>
+#include <Tabs/GRIPTab.h>
+#include <Tabs/GRIPThread.h>
 
-namespace planning { class Controller; }
-namespace dynamics { class SkeletonDynamics; }
+namespace BoostServer { class session; class connection; class server; }
+using boost::asio::ip::tcp;
 
-class icarusTab : public GRIPTab
+class serverTab : public GRIPTab
 {
-public:
-  icarusTab() {};
-  icarusTab(wxWindow * parent, wxWindowID id = -1, const wxPoint & pos = wxDefaultPosition, const wxSize & size = wxDefaultSize, long style = wxTAB_TRAVERSAL);
-  virtual ~icarusTab() {};
+	public:
+		serverTab() {};
+		serverTab(wxWindow * parent, wxWindowID id = -1, const wxPoint & pos = wxDefaultPosition, const wxSize & size = wxDefaultSize, long style = wxTAB_TRAVERSAL);
+		virtual ~serverTab() {};
 
-  virtual void GRIPEventSimulationBeforeTimestep();
-  virtual void GRIPEventSceneLoaded();
+		void serverTab::GRIPEventSceneLoaded();
+		void serverTab::GRIPEventSimulationStart();
+		void serverTab::GRIPEventSimulationStop();
 
-  void onButtonRestartObjects(wxCommandEvent & _evt);
-  void onButtonShowStart(wxCommandEvent & _evt);
-  void onButtonShowGoal(wxCommandEvent & _evt);
-  void onButtonPlan(wxCommandEvent & _evt);
+		void onButtonStart(wxCommandEvent & _evt);
+		void onButtonStop(wxCommandEvent & _evt);
+		void onButtonChangePort(wxCommandEvent & _evt);
 
-  planning::Controller* mController;
-  
-  dynamics::SkeletonDynamics* mRobot;
-  std::vector<int> mArmDofs;
-  Eigen::VectorXd mStartConf;
-  Eigen::VectorXd mGoalConf;
-  Eigen::VectorXd mPredefStartConf;
-  Eigen::VectorXd mPredefGoalConf;
+		int defPort;
 
-  DECLARE_DYNAMIC_CLASS(icarusTab)
-  DECLARE_EVENT_TABLE()
+		void serverTab::startServer();
+		void serverTab::stopServer();
+
+		DECLARE_DYNAMIC_CLASS(serverTab)
+		DECLARE_EVENT_TABLE()
+
+	private:
+		enum { SceneLoaded, SimulationStart, SimulationStop, ServerStart, ServerStop  } state_;
 };
 
 #endif
