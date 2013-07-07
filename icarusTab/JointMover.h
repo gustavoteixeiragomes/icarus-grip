@@ -35,51 +35,61 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/**
+ * @file JointMover.cpp
+ * @brief Jacobian-based planning handling only translations
+ * @author Juan C. Garcia in collaboration with Arash Rouhani made minor modifications 
+ * to code provided by Ana C. Huaman Quispe 
+ */
 
-#ifndef __SERVER_TAB__
-#define __SERVER_TAB__
+#pragma once
+#ifndef _JointMover_H_
+#define _JointMover_H_
 
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN 1
-#endif
-
-#include <GUI/Viewer.h>
-#include <GUI/GUI.h>
-
-#include "BoostServer.h"
-
+#include <iostream>
+#include <Eigen/Core>
 #include <vector>
-#include <Tabs/GRIPTab.h>
-#include <Tabs/GRIPThread.h>
+#include <dynamics/BodyNodeDynamics.h>
+#include <dynamics/SkeletonDynamics.h>
+#include <simulation/World.h>
+// Macros
+#define PRINT(x) std::cout << #x << " = " << x << std::endl;
+#define ECHO(x) std::cout << x << std::endl;
 
-namespace BoostServer { class session; class connection; class server; }
-using boost::asio::ip::tcp;
+using namespace std;
+using namespace Eigen;
+// The speed of each joint, note that the joint values are between -120 to
+// 120 on the robot arm
+const double jointSpeeds = 5.0; // degrees/second
 
-class serverTab : public GRIPTab
-{
-	public:
-		serverTab() {};
-		serverTab(wxWindow * parent, wxWindowID id = -1, const wxPoint & pos = wxDefaultPosition, const wxSize & size = wxDefaultSize, long style = wxTAB_TRAVERSAL);
-		virtual ~serverTab() {};
+class JointMover {
+  private:
+    /// Member variables
+    double mConfigStep;
+    simulation::World &mWorld;
+    dynamics::SkeletonDynamics* mRobot;
+    std::vector<int> mLinks;
+    
+    double mWorkspaceThresh;
 
-		void serverTab::GRIPEventSceneLoaded();
-		void serverTab::GRIPEventSimulationStart();
-		void serverTab::GRIPEventSimulationStop();
+    dynamics::BodyNodeDynamics* mEENode;
+    int mMaxIter;
+    
+  public:
+    JointMover( simulation::World &_world, dynamics::SkeletonDynamics* robot, const std::vector<int> &_links,  std::string _EEName,
+        double _configStep);
+    MatrixXd GetPseudoInvJac(bool both);
+    
+    bool GoToXYZRPY( VectorXd _qStart, VectorXd _targetXYZ, VectorXd &_qResult, std::list<Eigen::VectorXd> &path );
 
-		void onButtonStart(wxCommandEvent & _evt);
-		void onButtonStop(wxCommandEvent & _evt);
-		void onButtonChangePort(wxCommandEvent & _evt);
+    VectorXd OneStepTowardsXYZRPY( VectorXd _q, VectorXd _targetXYZ);
 
-		int defPort;
-
-		void serverTab::startServer();
-		void serverTab::stopServer();
-
-		DECLARE_DYNAMIC_CLASS(serverTab)
-		DECLARE_EVENT_TABLE()
-
-	private:
-		enum { SceneLoaded, SimulationStart, SimulationStop, ServerStart, ServerStop  } state_;
+    VectorXd GetXYZRPY( VectorXd _q , bool both);
+    
+    double jointSpaceDistance(VectorXd _q1, VectorXd _q2);
+    
+    VectorXd jointSpaceMovement(VectorXd _qStart, VectorXd _qGoal);
 };
 
 #endif
+

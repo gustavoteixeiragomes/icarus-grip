@@ -48,8 +48,8 @@ link_directories(${GRIP_LIBRARY_DIRS})
 
 
 # Search all header and source files
-set ( icarusTab_src icarusTab.cpp icarusTabApp.cpp Controller.cpp socket.cpp )
-set ( icarusTab_hdr icarusTab.h Controller.h socket.h )
+set ( icarusTab_src icarusTab.cpp icarusTabApp.cpp Controller.cpp serverTab.cpp BoostServer.cpp HandleInterface.cpp Grasper.cpp JointMover.cpp )
+set ( icarusTab_hdr icarusTab.h serverTab.h Controller.h BoostServer.h HandleInterface.h Grasper.h JointMover.h )
 
 if(WIN32)
   set (wxWidgets_EXCLUDE_COMMON_LIBRARIES TRUE)

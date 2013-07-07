@@ -1,4 +1,4 @@
-
+#pragma once
 #ifndef __HANDLE_INTERFACE__
 	#define __HANDLE_INTERFACE__
 

@@ -36,31 +36,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
 #ifndef __ICARUS_TAB__
 #define __ICARUS_TAB__
 
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN 1
-#endif
-
-#include <vector>
-#include <Tabs/GRIPTab.h>
-#include <fstream>
-
 #include <GUI/Viewer.h>
 #include <GUI/GUI.h>
-
-#include <collision/CollisionSkeleton.h>
-#include <dynamics/SkeletonDynamics.h>
-#include <dynamics/ContactDynamics.h>
-#include <kinematics/ShapeBox.h>
-#include <kinematics/Dof.h>
-#include <kinematics/Joint.h>
+#include <Tabs/GRIPTab.h>
 #include <planning/PathPlanner.h>
-#include <planning/PathShortener.h>
 #include <planning/PathFollowingTrajectory.h>
 
-#include "Controller.h"
+#include "Grasper.h"
 
 namespace planning { class Controller; }
 namespace dynamics { class SkeletonDynamics; }
@@ -68,29 +54,43 @@ namespace dynamics { class SkeletonDynamics; }
 class icarusTab : public GRIPTab
 {
 public:
-  icarusTab() {};
-  icarusTab(wxWindow * parent, wxWindowID id = -1, const wxPoint & pos = wxDefaultPosition, const wxSize & size = wxDefaultSize, long style = wxTAB_TRAVERSAL);
-  virtual ~icarusTab() {};
+	icarusTab() {};
+	icarusTab(wxWindow * parent,
+		wxWindowID id = -1,
+		const wxPoint & pos = wxDefaultPosition,
+		const wxSize & size = wxDefaultSize,
+		long style = wxTAB_TRAVERSAL);
+	virtual ~icarusTab() {};
 
-  virtual void GRIPEventSimulationBeforeTimestep();
-  virtual void GRIPEventSceneLoaded();
+	virtual void GRIPEventSimulationBeforeTimestep();
+	virtual void GRIPEventSceneLoaded();
+	virtual void GRIPStateChange();
 
-  void onButtonRestartObjects(wxCommandEvent & _evt);
-  void onButtonShowStart(wxCommandEvent & _evt);
-  void onButtonShowGoal(wxCommandEvent & _evt);
-  void onButtonPlan(wxCommandEvent & _evt);
+	void onButtonRestartObjects(wxCommandEvent & _evt);
+	void onButtonShowStart(wxCommandEvent & _evt);
+	void onButtonShowGoal(wxCommandEvent & _evt);
+	void onButtonAction(wxCommandEvent & _evt);
 
-  planning::Controller* mController;
-  
-  dynamics::SkeletonDynamics* mRobot;
-  std::vector<int> mArmDofs;
-  Eigen::VectorXd mStartConf;
-  Eigen::VectorXd mGoalConf;
-  Eigen::VectorXd mPredefStartConf;
-  Eigen::VectorXd mPredefGoalConf;
+	void grasp();
+	void retryGrasp();
+	
+	planning::Controller* mController;
+	planning::Grasper* grasper;
+	kinematics::BodyNode* selectedNode;
+	dynamics::SkeletonDynamics* mRobot;
 
-  DECLARE_DYNAMIC_CLASS(icarusTab)
-  DECLARE_EVENT_TABLE()
+	std::vector<int> mArmDofs;
+	Eigen::VectorXd mStartConf;
+	Eigen::VectorXd mGoalConf;
+	Eigen::VectorXd mPredefStartConf;
+	Eigen::VectorXd mPredefGoalConf;
+	Eigen::VectorXd fixedGrasp;
+	bool mAlreadyReplan;
+	std::string eeName;  
+	Vector3d currentGraspPoint;
+
+	DECLARE_DYNAMIC_CLASS(icarusTab)
+	DECLARE_EVENT_TABLE()
 };
 
 #endif

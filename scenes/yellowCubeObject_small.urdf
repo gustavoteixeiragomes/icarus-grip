@@ -11,12 +11,12 @@
 		</inertial>
 		<visual>
 			<geometry>
-				<mesh filename="objects/yellowCube_111_2.3ds"/>
+				<mesh filename="objects/yellowCube_111_1.3ds"/>
 			</geometry>
 		</visual>
 		<collision>
 			<geometry>
-				<mesh filename="objects/yellowCube_111_2.3ds"/>
+				<mesh filename="objects/yellowCube_111_1.3ds"/>
 			</geometry>
 		</collision>
 	</link>

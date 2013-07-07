@@ -18,12 +18,13 @@
     <origin xyz="0.40 -0.13 0.45" rpy="1.57 0.0 0.0"/>
   </entity>
 
+  <!-- 
   <entity model="orangeCube" name="orangeCube">
     <origin xyz="0.30 -0.30 0.83" rpy="0.0 0.0 0.0"/>
   </entity>
 
   <entity model="yellowCube" name="yellowCube">
-    <origin xyz="0.30 -0.30 0.935" rpy="0.0 0.0 0.0"/>
+    <origin xyz="0.30 -0.30 0.90" rpy="0.0 0.0 0.0"/>
   </entity>
 
   <entity model="cyanCube" name="cyanCube">
@@ -32,6 +33,11 @@
 
   <entity model="redCube" name="redCube">
     <origin xyz="0.30 -0.15 0.935" rpy="0.0 0.0 0.0"/>
+  </entity>
+  -->
+  
+  <entity model="yellowCube" name="yellowCube">
+    <origin xyz="0.30 -0.30 0.80" rpy="0.0 0.0 0.0"/>
   </entity>
 
   <!-- Not small objects

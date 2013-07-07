@@ -21,8 +21,17 @@
     <origin xyz="0.33 -0.12 0.782" rpy="3.14 0.0 0.0"/>
    </entity>-->
   
-  <entity model="blueBar" name="blue bar">
+  <entity model="blueBar" name="A">
     <origin xyz="0.33 -0.10 0.784" rpy="3.14 0.0 0.0"/>
+   </entity>
+<entity model="blueBar" name="B">
+    <origin xyz="0.33 -0.20 0.784" rpy="3.14 0.0 0.0"/>
+   </entity>
+<entity model="blueBar" name="C">
+    <origin xyz="0.33 -0.30 0.784" rpy="3.14 0.0 0.0"/>
+   </entity>
+<entity model="blueBar" name="D">
+    <origin xyz="0.33 -0.40 0.784" rpy="3.14 0.0 0.0"/>
    </entity>
  
   <!--<entity model="dumbbell" name="dumbbell">
