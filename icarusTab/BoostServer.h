@@ -18,7 +18,7 @@
 	#endif
 #endif
 // Define max size of read buffer for socket
-#define MAX_BUFFER 128
+#define MAX_BUFFER 1024
 #define SERVER_PORT 6003
 
 #include "HandleInterface.h"
