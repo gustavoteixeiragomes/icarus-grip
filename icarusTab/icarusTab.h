@@ -50,6 +50,7 @@
 
 namespace planning { class Controller; }
 namespace dynamics { class SkeletonDynamics; }
+namespace general {}
 
 class icarusTab : public GRIPTab
 {
@@ -78,6 +79,7 @@ public:
 	planning::Grasper* grasper;
 	kinematics::BodyNode* selectedNode;
 	dynamics::SkeletonDynamics* mRobot;
+	//simulation::World* mWorld;
 
 	std::vector<int> mArmDofs;
 	Eigen::VectorXd mStartConf;

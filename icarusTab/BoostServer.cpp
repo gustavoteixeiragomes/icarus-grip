@@ -75,6 +75,10 @@ void BoostServer::session::do_write(boost::system::error_code& ec) {
 tcp::socket& BoostServer::connection::socket() {
 	return socket_;
 }
+/*
+void BoostServer::connection::setWorld(simulation::World* mWorld) {
+	//session_impl_.handle_.world_ = mWorld;
+}*/
 
 void BoostServer::connection::start() {
 	// Put the socket into non-blocking mode.
@@ -160,6 +164,13 @@ void BoostServer::server::handle_accept(connection::pointer new_connection,
     const boost::system::error_code& error) {
 	if (!error) {
 		new_connection->start();
+		//new_connection->setWorld(world_); 
 		start_accept();
 	}
 }
+
+/*
+void BoostServer::server::setWorld(simulation::World* mWorld) {
+	world_ = mWorld;
+}
+*/

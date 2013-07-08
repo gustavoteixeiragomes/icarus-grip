@@ -21,13 +21,13 @@
 #define MAX_BUFFER 128
 #define SERVER_PORT 6003
 
+#include "HandleInterface.h"
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
-
-#include "HandleInterface.h"
+//#include <simulation/World.h>
 
 using boost::asio::ip::tcp;
 
@@ -65,12 +65,13 @@ namespace BoostServer {
 		// Notify that library that it should perform its write operation.
 		void do_write(boost::system::error_code& ec);
 
+		handleInterface::Handle handle_;
+
 	private:
 		tcp::socket& socket_;
 		enum { reading, writing } state_;
 		boost::array<char, MAX_BUFFER> data_;
 		boost::asio::const_buffer write_buffer_;
-		handleInterface::Handle handle_;
 	};
 
 	// The glue between asio's sockets and the boost-server library.
@@ -82,6 +83,7 @@ namespace BoostServer {
 				return pointer(new connection(io_service));
 			};
 			tcp::socket& socket();
+			//void setWorld(simulation::World* mWorld);
 			void start();
 
 		private:
@@ -108,11 +110,13 @@ namespace BoostServer {
 				: acceptor_(io_service, tcp::endpoint(tcp::v4(), port)) {
 					start_accept();
 			}
+			//void setWorld(simulation::World* mWorld);
 
 		private:
 			void start_accept();
 			void handle_accept(connection::pointer new_connection, const boost::system::error_code& error);
 			tcp::acceptor acceptor_;
+			//simulation::World* world_;
 	};
 
 } // namespace BoostServer

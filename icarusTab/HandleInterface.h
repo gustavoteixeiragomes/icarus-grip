@@ -3,6 +3,17 @@
 	#define __HANDLE_INTERFACE__
 
 #include <string>
+#include <sstream>
+#include <iomanip>
+#include <GUI/GUI.h>  // extern mWorld
+#include <simulation/World.h>
+#include <dynamics/BodyNodeDynamics.h>
+#include <dynamics/SkeletonDynamics.h>
+#include <kinematics/TrfmTranslate.h>
+#include <kinematics/Transformation.h>
+#include <kinematics/Joint.h>
+#include <kinematics/Dof.h>
+#include <kinematics/Shape.h>
 
 namespace handleInterface {
 	// Handle with the requests from the client Icarus in the server
@@ -15,6 +26,7 @@ namespace handleInterface {
 			void setRequest(std::string request);
 			std::string getAnswer();
 			void clear();
+			//simulation::World* world_;
 			
 		private:
 			enum { waitingRequest, waitingExecution, done } state_;

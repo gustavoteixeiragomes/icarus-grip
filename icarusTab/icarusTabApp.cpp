@@ -8,8 +8,8 @@
 #endif
 
 #include "GRIPApp.h"
-#include "BoostServer.h"
 #include "icarusTab.h"
+#include "BoostServer.h"
 
 extern wxNotebook* tabView;
 HANDLE hThread;
@@ -17,9 +17,11 @@ unsigned threadID;
 
 // Run when the server accept a connection
 unsigned __stdcall Connection(void* arg) {
-	//serverTab* serverTabObj = (serverTab*)arg;
+	icarusTab* icarusTabObj = (icarusTab*)arg;
 	boost::asio::io_service io_service;
 	BoostServer::server s(io_service, SERVER_PORT);
+	//s.setWorld(icarusTabObj->mWorld);
+
 	//serverTabObj->serverRunning_ = 1;
 	// WIN32 conflict wxWidgets with boost::thread
 	//boost::thread t(boost::bind(&boost::asio::io_service::run, &io_service));
@@ -29,11 +31,12 @@ unsigned __stdcall Connection(void* arg) {
 
 class icarusTabApp : public GRIPApp {
 	virtual void AddTabs() {
-		tabView->AddPage(new icarusTab(tabView), wxT("ICARUS Tab"));
+		icarusTab* icarusTabObj = new icarusTab(tabView);
+		tabView->AddPage(icarusTabObj, wxT("ICARUS Tab"));
 		//tabView->AddPage(new serverTab(tabView), wxT("Server Tab"));
 		std::cout << "Start Server" << endl;
 		try {
-			hThread = (HANDLE)_beginthreadex(0, 0, Connection, this, 0, &threadID);	
+			hThread = (HANDLE)_beginthreadex(0, 0, Connection, icarusTabObj, 0, &threadID);
 		}
 		catch (char *s) {
 			cerr << s << endl;
